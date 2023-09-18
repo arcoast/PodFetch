@@ -26,6 +26,16 @@ Assuming your podfetch container is called `$PODFETCH` this can be done as follo
   -  Enter `admin`
   -  Login as `sam` again and you should find `sam` is now an admin.
 
+### Endpoints
+
+Whilst all of Podfetch can be protected with OIDC, it may be that you find it necessary to allow access to certain subfolder endpoints desirable to allow clients to connect without authentication for certain functionality, such as mobile device access over WAN.
+
+The endpoints that need to be considered are:
+  
+  - `/api` - to allow access to gPodder functionality
+  - `/rss` - to allow access to rss feeds
+  - `/podcasts` - to allow podcast streaming/download
+
 ### Keycloak
 
 | Variable          | Description                                                   | Example                                                      |
@@ -43,7 +53,7 @@ Note: For OIDC authorities that allow for selecting between `Confidential`/`Priv
 
 This assumes you already have OIDC set up in Authelia and your Authelia instance is being served on a subdomain `https://auth.DOMAIN.COM` with podfetch being served on it's own subdomain at `https://podfetch.DOMAIN.COM`
 
-**Podfetch Configuration**
+#### Authelia Podfetch Configuration
 
 | Variable          | Description                                                   | Example                                                      |
 |-------------------|---------------------------------------------------------------|--------------------------------------------------------------|
@@ -54,7 +64,7 @@ This assumes you already have OIDC set up in Authelia and your Authelia instance
 | OIDC_SCOPE        | The scope of the oidc token                                   | `openid profile email`                                       |
 | OIDC_JWKS         | The JWKS token uri                                            | `https://auth.DOMAIN.COM/jwks.json` |
 
-**Authelia Configuration**
+#### Authelia Configuration
 
 Configure the OIDC client in Authelia as below, you can change your `authorization_policy` and `consent_mode` according to your needs.
 
@@ -71,4 +81,28 @@ Configure the OIDC client in Authelia as below, you can change your `authorizati
         redirect_uris:
           - https://podfetch.DOMAIN.COM/ui/login
         userinfo_signing_algorithm: none
+```
+
+#### Authelia ACL
+
+To allow access to the endpoints discussed above you may wish to configure your ACL list as follows:
+
+```yaml
+access_control:
+  default_policy: deny
+  rules:
+    - domain: podfetch.DOMAIN.COM
+      resources:
+        - "^/api([/?].*)?$"
+      policy: bypass
+
+    - domain: podfetch.DOMAIN.COM
+      resources:
+        - "^/podcasts([/?].*)?$"
+      policy: bypass
+
+    - domain: podfetch.DOMAIN.COM
+      resources:
+        - "^/rss([/?].*)?$"
+      policy: bypass
 ```
